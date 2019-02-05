@@ -1,0 +1,77 @@
+global class CalcAccOpportunityProductsData implements Database.Batchable<sObject> {
+    List<ID> accIDList;
+    
+    global CalcAccOpportunityProductsData( List<ID> accIDList){
+        this.accIDList = accIDList;        
+    }
+    
+    global Database.QueryLocator start(Database.BatchableContext bc) {
+        return Database.getQueryLocator([SELECT id, AccountID FROM Opportunity Where AccountID in :accIDList]);
+    }
+    
+    global void execute(Database.BatchableContext bc, List<Opportunity> OppList){
+         Map<Id, Integer> accIdToOppCountMap = new Map<Id, Integer>();
+     
+        Map<Id,List<Opportunity>> accIdToOpp = new Map<Id,List<Opportunity>>();
+        
+        Map<Id, Integer> oppCalcQuantity = new Map<Id, Integer>();
+        Map<Id, Integer> oppCalcPrice = new Map<Id, Integer>();
+        Map<Id, Integer> oppCalcProd = new Map<Id, Integer>();
+             
+        //List<Opportunity> OppList = [Select id, accountID from Opportunity where accountID in :accIDList];
+        List<OpportunityLineItem> oppProductList = [Select UnitPrice, Quantity, OpportunityId 
+                                     				From OpportunityLineItem 
+                                     				Where OpportunityId in :OppList];
+        
+        List<sOBject> customAccList = [Select id, Account.id from Opportunity ];
+        System.debug('customAccList' + customAccList);
+        
+        Map<Id, List<Integer>> accCalcData = new Map<Id, List<Integer>>();
+        
+        for(Opportunity opp : OppList){
+             List<Opportunity> currentOppList = (accIdToOpp.get(opp.AccountId) != null)? 
+                accIdToOpp.get(opp.AccountId) : new List<Opportunity>();
+            currentOppList.add(opp);
+            accIdToOpp.put(opp.AccountId, currentOppList);             
+        }
+        
+        for(OpportunityLineItem oppProd : oppProductList){
+            /*List<OpportunityLineItem> curretnOppProductList = (oppIdToOppProd.get(oppProd.OpportunityId) != null)? 
+                oppIdToOppProd.get(oppProd.OpportunityId) : new List<OpportunityLineItem>();
+            curretnOppProductList.add(oppProd);
+            oppIdToOppProd.put(oppProd.OpportunityId, curretnOppProductList);
+            */            
+            Integer ProdOpp = (oppCalcProd.get(oppProd.OpportunityId)!=null)?
+                					oppCalcProd.get(oppProd.OpportunityId) : 0;
+            oppCalcProd.put(oppProd.OpportunityId, Integer.ValueOf(ProdOpp + 1));
+            
+            Integer QuantityOpp = (oppCalcQuantity.get(oppProd.OpportunityId)!=null)?
+                					oppCalcQuantity.get(oppProd.OpportunityId) : 0;
+            oppCalcQuantity.put(oppProd.OpportunityId, Integer.ValueOf(QuantityOpp + oppProd.Quantity));
+            
+            Integer PriceOpp = (oppCalcPrice.get(oppProd.OpportunityId)!=null)?
+                					oppCalcPrice.get(oppProd.OpportunityId) : 0;
+            oppCalcPrice.put(oppProd.OpportunityId, Integer.ValueOf(PriceOpp + oppProd.UnitPrice));    
+        }
+        List<Account> accList =[Select ID from Account where id in :accIDList]; 
+        for(Account acc : accList){
+            Integer accProd = 0;
+            Integer oppQuant = 0;
+            Integer oppPrice = 0;
+            for(Opportunity opp : accIdToOpp.get(acc.id)){
+                accProd += (oppCalcProd.get(opp.id)!=null) ? oppCalcProd.get(opp.id) : 0;
+                oppPrice += (oppCalcPrice.get(opp.id)!=null) ? oppCalcPrice.get(opp.id) : 0;
+                oppQuant += (oppCalcQuantity.get(opp.id)!=null) ? oppCalcQuantity.get(opp.id) : 0;
+            }
+            
+            acc.Products__c = accProd;            
+            acc.Price_SUM__c = oppPrice;            
+			acc.Quantity_SUM__c =oppQuant ;   
+        }
+        update accList;
+    }
+        
+    global void finish(Database.BatchableContext bc){
+        // execute any post-processing operations
+    }    
+}

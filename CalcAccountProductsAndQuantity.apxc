@@ -1,0 +1,23 @@
+public class CalcAccountProductsAndQuantity {
+      
+
+    public static void recalcOppProd(List<Id> oppIdList){    
+        List<ID> accIdList = new List<ID> ();
+        for(Opportunity opp :  [Select AccountID From Opportunity Where id in : oppIdList])
+             accIdList.add(opp.AccountID);
+        calcAcc(accIdList);     
+    }
+    
+    public static void getAccIdFromOpp(List<Opportunity> opp){
+        List<id> accId = new List<id>();
+        
+        for(Opportunity currentopp : opp){
+            accId.add(currentopp.AccountId);
+        }
+        calcAcc(accId);       
+    }
+    public static void calcAcc(List<ID> accIDList){
+        Database.executeBatch(new CalcAccOpportunityProductsData(accIDList));
+    }
+    
+}

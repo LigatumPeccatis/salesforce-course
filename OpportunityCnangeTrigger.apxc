@@ -1,0 +1,32 @@
+trigger OpportunityCnangeTrigger on Opportunity (after insert, after update, after delete) {
+	
+    If (Trigger.isDelete){
+        Set<Id> accountIdList = new Set<Id>();
+        for(Opportunity opp : Trigger.old)
+        	accountIdList.add(opp.AccountId);
+        CalcAccountProductsAndQuantity.calcAcc(new List<ID>(accountIdList));
+    }
+    
+    If ( Trigger.isInsert){
+        CalcAccountProductsAndQuantity.getAccIdFromOpp(Trigger.new);
+    }
+    
+    If (Trigger.isUpdate){
+        Set<Id> accountIdList = new Set<Id>();
+        Map<id, Opportunity> oldOpp = Trigger.oldMap;
+        Map<id, Opportunity> newOpp = Trigger.newMap;
+        
+        for(String oppId : oldOpp.keySet())
+            if(oldOpp.get(oppId).AccountId != newOpp.get(oppId).AccountId){
+            	accountIdList.add(oldOpp.get(oppId).AccountId);
+                accountIdList.add(oldOpp.get(oppId).AccountId);                
+                
+            }
+        CalcAccountProductsAndQuantity.calcAcc(new List<ID>(accountIdList));
+    }
+    
+    
+    
+    
+    
+}

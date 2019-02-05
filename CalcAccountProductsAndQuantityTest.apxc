@@ -1,0 +1,70 @@
+@isTest
+public class CalcAccountProductsAndQuantityTest {
+@isTest
+    static void Test(){
+        Account acc = new Account(Name = 'TestAcc');
+        insert acc;
+        Product2 prod = new Product2(Name='TestProd' );
+        insert prod;
+        
+        Product2 prod2 = new Product2(Name='TestProd2' );
+        insert prod2;
+        PriceBook2 prcBook = new PriceBook2(isActive= true, name = 'testPriceBook');
+        insert prcBook;
+        PricebookEntry entry = new PricebookEntry(product2id = prod2.id,
+                                                 Pricebook2Id = test.getStandardPricebookId(),
+                                                  UnitPrice = 20,
+                                                  IsActive=true
+                                                 );
+        insert entry; 
+        
+        PricebookEntry entry1 = new PricebookEntry(product2id = prod.id,
+                                                 Pricebook2Id = test.getStandardPricebookId(),
+                                                  UnitPrice = 20,
+                                                  IsActive=true
+                                                 );
+        insert entry1; 
+        
+        Test.startTest();
+        Opportunity opp = new Opportunity(Name='TestName', StageName = 'Prospecting', 
+                                          AccountId = acc.id, 
+                                          CloseDate = date.today()
+                                         ); 
+       
+        insert opp;
+        
+        Opportunity opp2 = new Opportunity(Name='TestName2', StageName = 'Prospecting', 
+                                          AccountId = acc.id, 
+                                          CloseDate = date.today()
+                                         ); 
+        
+        insert opp2;
+        
+        
+        
+        OpportunityLineItem oppLine = new OpportunityLineItem(OpportunityId = opp.id, 
+                                                              Quantity = 5, 
+                                                              UnitPrice = 20,
+                                                              PricebookEntryId = entry1.id
+                                                              
+                                                             );
+        insert oppLine;
+        
+        
+        OpportunityLineItem oppLine1 = new OpportunityLineItem(OpportunityId = opp2.id, 
+                                                              Quantity = 10, 
+                                                              UnitPrice = 10,
+                                                              PricebookEntryId = entry1.id
+                                                              
+                                                             );
+        insert oppLine1;
+        
+        Test.stopTest();
+        
+        System.debug([Select Name, Products__c, Price_SUM__c, Quantity_SUM__c   from Account ]);
+        
+        
+        
+    }
+    
+}

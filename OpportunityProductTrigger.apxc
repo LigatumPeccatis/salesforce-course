@@ -1,0 +1,31 @@
+trigger OpportunityProductTrigger on OpportunityLineItem (after insert, after update, before delete) {
+	
+     If (Trigger.isDelete){
+        Set<Id> oppIdList = new Set<Id>();
+        for(OpportunityLineItem oppProd : Trigger.old)
+            oppIdList.add(oppProd.OpportunityId);
+        CalcAccountProductsAndQuantity.recalcOppProd(new List<id>(oppIdList));
+    }
+    
+    If (Trigger.isInsert){
+        Set<Id> oppIdList = new Set<Id>();
+        for(OpportunityLineItem oppProd : Trigger.new)
+            oppIdList.add(oppProd.OpportunityId);
+        CalcAccountProductsAndQuantity.recalcOppProd(new List<id>(oppIdList));
+    }
+    
+    If (Trigger.isUpdate){
+        Set<Id> oppIdList = new Set<Id>();
+        Map<id, OpportunityLineItem> oldOpp = Trigger.oldMap;
+        Map<id, OpportunityLineItem> newOpp = Trigger.newMap;
+        
+        for(String oppId : oldOpp.keySet())
+            if(oldOpp.get(oppId).OpportunityId != newOpp.get(oppId).OpportunityId){
+            	oppIdList.add(oldOpp.get(oppId).OpportunityId);
+                oppIdList.add(newOpp.get(oppId).OpportunityId);                              
+            }
+        
+        CalcAccountProductsAndQuantity.recalcOppProd(new List<ID>(oppIdList));
+    }
+    
+}
